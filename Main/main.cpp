@@ -41,6 +41,7 @@ void free_libraries() {
         FreeLibrary(asm_handle);
 }
 
+#include <thread>
 
 int main() {
     load_libraries();
@@ -52,7 +53,7 @@ int main() {
 
     bmp_t cat, cat_after;
 
-    bmp_load(&cat, "../img/cat_blur.bmp");
+    bmp_load(&cat, "../img/cat_big.bmp");
     bmp_empty_from(&cat_after, &cat);
 
 
@@ -61,13 +62,14 @@ int main() {
 
         // Measure time for the C function
         auto c_start = std::chrono::high_resolution_clock::now();
-        laplace_c(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
+        //laplace_c(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
         auto c_end = std::chrono::high_resolution_clock::now();
         auto c_time = std::chrono::duration_cast<std::chrono::microseconds>(c_end - c_start).count();
 
         // Measure time for the ASM function
         auto asm_start = std::chrono::high_resolution_clock::now();
         laplace_asm(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
         auto asm_end = std::chrono::high_resolution_clock::now();
         auto asm_time = std::chrono::duration_cast<std::chrono::microseconds>(asm_end - asm_start).count();
 
@@ -78,7 +80,7 @@ int main() {
     }
 
 
-    bmp_save(&cat_after, "../img/cat_laplace.bmp");
+    bmp_save(&cat_after, "../img/cat_big_laplace.bmp");
 
     bmp_free(&cat);
     bmp_free(&cat_after);

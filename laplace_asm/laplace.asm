@@ -1,18 +1,21 @@
 PUBLIC laplace
 
+INCLUDELIB kernel32.lib
+
+CreateThread PROTO :DWORD, :DWORD, :QWORD, :QWORD, :DWORD, :QWORD
+WaitForMultipleObjects PROTO :DWORD, :QWORD, :DWORD, :QWORD
 
 .data
+    ; global constants
     NUM_CHANNELS dq 3
     LANE_WIDTH dq 8
 
+    ; procedure arguments
 	img_width  dq 0
 	img_height dq 0
-
 	src_array dq 0
 	dst_array dq 0
-
 	num_threads dq 0
-
 	amplification dq 0
 
 
@@ -33,25 +36,34 @@ laplace PROC
     mov eax, dword ptr [rsp + 38h]
     mov qword ptr amplification, rax
 
-    push rcx ; Save registers
+    push rbx ; Save registers
 
-    ; Initialize rcx to 0 for the thread loop
-    xor rcx, rcx
+    ; Initialize rbx to 0 for the thread loop
+    xor rbx, rbx
 thread_loop_start:
-    ; Loop condition: compare rcx (thread index) with num_threads
-    cmp rcx, qword ptr [num_threads]
-    jge thread_loop_end ; Exit loop if rcx >= num_threads
+    ; Loop condition: compare rbx (thread index) with num_threads
+    cmp rbx, qword ptr [num_threads]
+    jge thread_loop_end ; Exit loop if rbx >= num_threads
 
-    ; Call thread_func, passing thread ID (rcx) as argument in rdx
-    mov rdx, rcx
-    call thread_func
+
+    ; Create a new thread
+    push 0 ; lpThreadId
+    push 0 ; dwCreationFlags - 0 = start thread immediately
+    sub rsp, 20h ; Reserve space for arguments
+    mov r9, rbx ; lpParameter - Pass thread index as argument
+    mov r8, offset thread_func ; lpStartAddress - Address of thread function
+    mov rdx, 0 ; dwStackSize - Default stack size
+    mov rcx, 0 ; lpThreadAttributes - Default thread attributes
+
+    ; Create the thread
+    call CreateThread
 
     ; Increment thread index
-    inc rcx
+    inc rbx
     jmp thread_loop_start ; Repeat the loop
 thread_loop_end:
 
-    pop rcx ; Restore register
+    pop rbx ; Restore register
 
     ; Epilogue
     mov rsp, rbp
@@ -98,11 +110,11 @@ thread_func PROC
     ; Calculate first per-subpixel processing index
     mov rax, qword ptr [img_width]
     imul rax, NUM_CHANNELS
-    push rbx
-    mov rbx, LANE_WIDTH
-    imul rbx, 4
-    sub rax, rbx
-    pop rbx
+    push r8
+    mov r8, LANE_WIDTH
+    imul r8, 4
+    sub rax, r8
+    pop r8
     sub rax, NUM_CHANNELS
     inc rax
     mov qword ptr [first_subpixel_proc_idx], rax
@@ -114,8 +126,8 @@ thread_func PROC
     ; Zero out ymm7 (for zero-extension during unpacking bytes to words)
     vpxor ymm7, ymm7, ymm7
 
-    ; Initialize y iterator (r8) to thread ID (rdx), skipping the 0-th row
-    mov r8, rdx
+    ; Initialize y iterator (r8) to thread ID (rcx), skipping the 0-th row
+    mov r8, rcx
     inc r8
 y_loop_start:
     ; Y loop condition
