@@ -18,6 +18,8 @@ WaitForMultipleObjects PROTO :DWORD, :QWORD, :DWORD, :QWORD
 	num_threads dq 0
 	amplification dq 0
 
+    ; thread handles (64)
+    thread_handles dq 64 ; dup(0)
 
 .code
 
@@ -58,10 +60,21 @@ thread_loop_start:
     ; Create the thread
     call CreateThread
 
+    ; save the thread handle
+    lea rcx, thread_handles
+    mov qword ptr [rcx + rbx * 8], rax
+
     ; Increment thread index
     inc rbx
     jmp thread_loop_start ; Repeat the loop
 thread_loop_end:
+
+    ; Wait for all threads to finish
+    mov rcx, qword ptr num_threads
+    lea rdx, thread_handles
+    mov r8, 0 ; bWaitAll = FALSE
+    mov r9, -1 ; dwMilliseconds = INFINITE
+    call WaitForMultipleObjects
 
     pop rbx ; Restore register
 
