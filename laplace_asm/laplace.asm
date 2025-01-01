@@ -8,6 +8,7 @@ extern CloseHandle: PROC
 
 .data
     ; global constants
+    MAX_THREADS dq 64
     NUM_CHANNELS dq 3
     LANE_WIDTH dq 8
 
@@ -41,6 +42,14 @@ laplace PROC
 
     push rbx ; Save registers
     push rsi
+
+    ; if num_threads > MAX_THREADS, set num_threads to MAX_THREADS
+    mov rax, qword ptr num_threads
+    cmp rax, MAX_THREADS
+    jle num_threads_ok
+    mov rax, MAX_THREADS
+    mov qword ptr num_threads, rax
+num_threads_ok: 
 
     ; Initialize rbx to 0 for the thread loop
     xor rbx, rbx
