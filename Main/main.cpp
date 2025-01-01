@@ -59,17 +59,25 @@ int main() {
     for (int numThreads = 1; numThreads <= 64; numThreads <<= 1) {
         const int SCALE = 1000000;
 
-        // Measure time for the C function
-        auto c_start = std::chrono::high_resolution_clock::now();
-        laplace_c(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
-        auto c_end = std::chrono::high_resolution_clock::now();
-        auto c_time = std::chrono::duration_cast<std::chrono::microseconds>(c_end - c_start).count();
+        //// Measure time for the C function
+        //auto c_start = std::chrono::high_resolution_clock::now();
+        //laplace_c(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
+        //auto c_end = std::chrono::high_resolution_clock::now();
+        //auto c_time = std::chrono::duration_cast<std::chrono::microseconds>(c_end - c_start).count();
 
-        // Measure time for the ASM function
-        auto asm_start = std::chrono::high_resolution_clock::now();
-        laplace_asm(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
-        auto asm_end = std::chrono::high_resolution_clock::now();
-        auto asm_time = std::chrono::duration_cast<std::chrono::microseconds>(asm_end - asm_start).count();
+        //// Measure time for the ASM function
+        //auto asm_start = std::chrono::high_resolution_clock::now();
+        //laplace_asm(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
+        //auto asm_end = std::chrono::high_resolution_clock::now();
+        //auto asm_time = std::chrono::duration_cast<std::chrono::microseconds>(asm_end - asm_start).count();
+
+        long c_start = __rdtsc();
+		laplace_c(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
+		long c_time = __rdtsc() - c_start;
+
+		long asm_start = __rdtsc();
+		laplace_asm(cat.width, cat.height, cat.data, cat_after.data, numThreads, 16);
+		long asm_time = __rdtsc() - asm_start;
 
         std::cout << "Threads: " << numThreads
             << ", C: " << c_time

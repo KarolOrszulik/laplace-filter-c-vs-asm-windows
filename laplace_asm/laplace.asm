@@ -19,7 +19,7 @@ WaitForMultipleObjects PROTO :DWORD, :QWORD, :DWORD, :QWORD
 	amplification dq 0
 
     ; thread handles (64)
-    thread_handles dq 64 ; dup(0)
+    thread_counter dq 0
 
 .code
 
@@ -40,11 +40,15 @@ laplace PROC
 
     push rbx ; Save registers
 
+    ; set thread counter to num_threads
+    mov rax, qword ptr num_threads
+    mov qword ptr thread_counter, rax
+
     ; Initialize rbx to 0 for the thread loop
     xor rbx, rbx
 thread_loop_start:
     ; Loop condition: compare rbx (thread index) with num_threads
-    cmp rbx, qword ptr [num_threads]
+    cmp rbx, qword ptr num_threads
     jge thread_loop_end ; Exit loop if rbx >= num_threads
 
 
@@ -60,21 +64,14 @@ thread_loop_start:
     ; Create the thread
     call CreateThread
 
-    ; save the thread handle
-    lea rcx, thread_handles
-    mov qword ptr [rcx + rbx * 8], rax
-
     ; Increment thread index
     inc rbx
     jmp thread_loop_start ; Repeat the loop
 thread_loop_end:
 
-    ; Wait for all threads to finish
-    mov rcx, qword ptr num_threads
-    lea rdx, thread_handles
-    mov r8, 0 ; bWaitAll = FALSE
-    mov r9, -1 ; dwMilliseconds = INFINITE
-    call WaitForMultipleObjects
+wait_loop_start:
+    cmp qword ptr thread_counter, 0
+    jg wait_loop_start
 
     pop rbx ; Restore register
 
@@ -195,6 +192,10 @@ y_loop_end:
     ; Procedure epilog
     mov rsp, rbp
     pop rbp
+
+    ; atomically decrement thread counter
+    lock dec qword ptr [thread_counter]
+
     ret
 thread_func ENDP
 
