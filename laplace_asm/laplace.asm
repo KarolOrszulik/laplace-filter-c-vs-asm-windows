@@ -2,8 +2,9 @@ PUBLIC laplace
 
 INCLUDELIB kernel32.lib
 
-CreateThread PROTO :DWORD, :DWORD, :QWORD, :QWORD, :DWORD, :QWORD
-WaitForMultipleObjects PROTO :DWORD, :QWORD, :DWORD, :QWORD
+extern CreateThread: PROC
+extern WaitForMultipleObjects: PROC
+extern CloseHandle: PROC
 
 .data
     ; global constants
@@ -19,7 +20,7 @@ WaitForMultipleObjects PROTO :DWORD, :QWORD, :DWORD, :QWORD
 	amplification dq 0
 
     ; thread handles (64)
-    thread_counter dq 0
+    thread_handles dq 64 dup(0)
 
 .code
 
@@ -39,10 +40,7 @@ laplace PROC
     mov qword ptr amplification, rax
 
     push rbx ; Save registers
-
-    ; set thread counter to num_threads
-    mov rax, qword ptr num_threads
-    mov qword ptr thread_counter, rax
+    push rsi
 
     ; Initialize rbx to 0 for the thread loop
     xor rbx, rbx
@@ -64,15 +62,40 @@ thread_loop_start:
     ; Create the thread
     call CreateThread
 
+    ; Save the thread handle
+    lea rsi, thread_handles
+    mov qword ptr [rsi + rbx * 8], rax
+
+
     ; Increment thread index
     inc rbx
     jmp thread_loop_start ; Repeat the loop
 thread_loop_end:
 
-wait_loop_start:
-    cmp qword ptr thread_counter, 0
-    jg wait_loop_start
+    ; Wait for all threads to finish
+    mov rcx, qword ptr num_threads
+    lea rdx, thread_handles
+    mov r8, 1 ; bWaitAll = TRUE
+    mov r9, -1 ; dwMilliseconds = INFINITE
+    call WaitForMultipleObjects
 
+    mov rcx, 0
+close_handles_loop:
+    ; Loop condition: compare rcx with num_threads
+    cmp rcx, qword ptr num_threads
+    jge close_handles_end ; Exit loop if rcx >= num_threads
+
+    ; Close the thread handle
+    lea rsi, thread_handles
+    mov rcx, qword ptr [rsi + rcx * 8]
+    call CloseHandle
+
+    ; Increment thread index
+    inc rcx
+    jmp close_handles_loop ; Repeat the loop
+close_handles_end:
+
+    pop rsi
     pop rbx ; Restore register
 
     ; Epilogue
@@ -192,9 +215,6 @@ y_loop_end:
     ; Procedure epilog
     mov rsp, rbp
     pop rbp
-
-    ; atomically decrement thread counter
-    lock dec qword ptr [thread_counter]
 
     ret
 thread_func ENDP
