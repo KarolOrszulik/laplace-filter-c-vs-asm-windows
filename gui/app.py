@@ -20,10 +20,15 @@ class MyApp(tk.Tk):
         self.geometry("800x600")
         self.minsize(720, 480)
 
-        self.create_main_panel()
+        self.columnconfigure(0, weight=0) # settings column
+        self.columnconfigure(1, weight=2, uniform="image columns") # image before column
+        self.columnconfigure(2, weight=2, uniform="image columns") # image after column
+
         self.create_settings_panel()
         self.create_image_before_panel()
         self.create_image_after_panel()
+
+        self.rowconfigure(0, weight=1)
 
         try:
             self.init_dlls()
@@ -44,31 +49,35 @@ class MyApp(tk.Tk):
         self.img_before_description.config(text=img_desc)
 
         self.process_button.config(state=tk.NORMAL)
-        thumbnail = self.img_before.copy()
-        thumbnail.thumbnail((300,300))
-        self.tk_img_before = ImageTk.PhotoImage(thumbnail)
-        self.label_img_before.config(image=self.tk_img_before)
-    
+        self.show_thumbnails()
         
     
+    def show_thumbnails(self):
+        
+        frame_width = self.panel_image_after.winfo_width() - 20
+        frame_height = self.panel_image_after.winfo_height() - 20
+        thumbnail_size = (frame_width, frame_height)
+
+        if self.img_before is not None:
+            thumbnail_before = self.img_before.copy()
+            thumbnail_before.thumbnail(thumbnail_size)
+            self.tk_img_before = ImageTk.PhotoImage(thumbnail_before)
+            self.label_img_before.config(image=self.tk_img_before)
+
+        if self.img_after is not None:
+            thumbnail_after = self.img_after.copy()
+            thumbnail_after.thumbnail(thumbnail_size)
+            self.tk_img_after = ImageTk.PhotoImage(thumbnail_after)
+            self.label_img_after.config(image=self.tk_img_after)
+
     def init_dlls(self):
         # load DLLs
         self.c_dll = ctypes.CDLL("../x64/Release/laplace_c.dll")
         self.asm_dll = ctypes.CDLL("../x64/Release/laplace_asm.dll")
 
-        if self.c_dll is None:
-            raise Exception("Failed to load laplace_c.dll")
-        if self.asm_dll is None:
-            raise Exception("Failed to load laplace_asm.dll")
-
         # extract functions 
         self.c_laplace = self.c_dll.laplace
         self.asm_laplace = self.asm_dll.laplace
-
-        if self.c_laplace is None:
-            raise Exception("Failed to extract laplace function from laplace_c.dll")
-        if self.asm_laplace is None:
-            raise Exception("Failed to extract laplace function from laplace_asm.dll")
 
         # set argtypes and restype
         argtypes = [ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_ubyte), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int, ctypes.c_int]
@@ -80,14 +89,10 @@ class MyApp(tk.Tk):
         # dlls loaded successfully, enable file selection
         self.file_button.config(state=tk.NORMAL)
 
-    
-    def create_main_panel(self):
-        self.panel_main = ttk.Frame(self)
-        self.panel_main.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
     def create_settings_panel(self):
-        self.panel_settings = ttk.Frame(self.panel_main, borderwidth=2, relief="groove", padding=10)
-        self.panel_settings.pack(side=tk.LEFT, fill=tk.Y, padx=5)
+        self.panel_settings = ttk.Frame(self, borderwidth=2, relief="groove", padding=5, width=200)
+        self.panel_settings.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
         # Header
         panel_header = ttk.Label(self.panel_settings, text="Settings", font=("Arial", 12))
@@ -137,8 +142,8 @@ class MyApp(tk.Tk):
         self.process_button.pack(pady=5, anchor=tk.W, side=tk.BOTTOM)
 
     def create_image_before_panel(self):
-        self.panel_image_before = ttk.Frame(self.panel_main, borderwidth=2, relief="groove", padding=10)
-        self.panel_image_before.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        self.panel_image_before = ttk.Frame(self, borderwidth=2, relief="groove", padding=5)
+        self.panel_image_before.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
 
         # Init Image-related data
         self.img_before: Image = None
@@ -155,8 +160,8 @@ class MyApp(tk.Tk):
         self.img_before_header.pack(pady=5, anchor=tk.W, side=tk.BOTTOM)
     
     def create_image_after_panel(self):
-        self.panel_image_after = ttk.Frame(self.panel_main, borderwidth=2, relief="groove", padding=10)
-        self.panel_image_after.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
+        self.panel_image_after = ttk.Frame(self, borderwidth=2, relief="groove", padding=5)
+        self.panel_image_after.grid(row=0, column=2, sticky="nsew", padx=5, pady=5)
 
         # Init Image-related data
         self.img_after: Image = None
@@ -198,14 +203,9 @@ class MyApp(tk.Tk):
 
         width, height = self.img_before.size
         output_data = np.frombuffer(output_array, dtype=np.uint8).reshape((height, width, 3))
-        output_img = Image.fromarray(output_data, "RGB")
-        thumbnail = output_img.copy()
-
-        frame_width = self.panel_image_after.winfo_width() - 20
-        frame_height = self.panel_image_after.winfo_height() - 20
-        thumbnail.thumbnail((frame_width, frame_height))
-        self.tk_img_after = ImageTk.PhotoImage(thumbnail)
-        self.label_img_after.config(image=self.tk_img_after)
+        self.img_after = Image.fromarray(output_data, "RGB")
+        
+        self.show_thumbnails()
 
 
 
