@@ -8,6 +8,7 @@ import numpy as np
 from PIL import Image, ImageTk
 
 import ctypes
+import time
 
 class MyApp(tk.Tk):
     def __init__(self):
@@ -17,6 +18,7 @@ class MyApp(tk.Tk):
 
         self.title("Laplace Filter - ASM vs C")
         self.geometry("800x600")
+        self.minsize(720, 480)
 
         self.create_main_panel()
         self.create_settings_panel()
@@ -31,16 +33,23 @@ class MyApp(tk.Tk):
 
     def open_input_image(self):
         file_path = filedialog.askopenfilename(title="Select the image file", filetypes=[("Image files", "*.jpg *.png *.bmp")])
+        if not file_path:
+            return
+
         self.img_before = Image.open(file_path)
-        self.file_label.config(text=file_path.split("/")[-1])
+        width, height = self.img_before.size
+
+        img_desc = f"file name: {file_path.split('/')[-1]}\ndimensions: {width}x{height} ({width*height} pixels)"
+
+        self.img_before_description.config(text=img_desc)
+
         self.process_button.config(state=tk.NORMAL)
-        self.show_before_thumbnail()
-    
-    def show_before_thumbnail(self):
         thumbnail = self.img_before.copy()
         thumbnail.thumbnail((300,300))
         self.tk_img_before = ImageTk.PhotoImage(thumbnail)
         self.label_img_before.config(image=self.tk_img_before)
+    
+        
     
     def init_dlls(self):
         # load DLLs
@@ -67,6 +76,9 @@ class MyApp(tk.Tk):
         self.c_laplace.restype = None
         self.asm_laplace.argtypes = argtypes
         self.asm_laplace.restype = None
+    
+        # dlls loaded successfully, enable file selection
+        self.file_button.config(state=tk.NORMAL)
 
     
     def create_main_panel(self):
@@ -83,11 +95,8 @@ class MyApp(tk.Tk):
 
 
         # File selection
-        file_button = ttk.Button(self.panel_settings, text="Pick image file", command=self.open_input_image)
-        file_button.pack(pady=5, anchor=tk.W)
-
-        self.file_label = ttk.Label(self.panel_settings, text="[No file selected]")
-        self.file_label.pack(pady=5, anchor=tk.W)
+        self.file_button = ttk.Button(self.panel_settings, text="Pick image file", command=self.open_input_image, state=tk.DISABLED)
+        self.file_button.pack(pady=(5,30), anchor=tk.W)
 
 
         # Number of threads
@@ -96,7 +105,7 @@ class MyApp(tk.Tk):
 
         self.thread_entry = ttk.Spinbox(self.panel_settings, from_=1, to=64)
         self.thread_entry.set(1)
-        self.thread_entry.pack(pady=5, anchor=tk.W)
+        self.thread_entry.pack(pady=(5,30), anchor=tk.W)
 
 
         # Implementation
@@ -106,10 +115,10 @@ class MyApp(tk.Tk):
         self.implementation_var = tk.StringVar()
 
         c_radio = ttk.Radiobutton(self.panel_settings, text="C", variable=self.implementation_var, value="C")
-        c_radio.pack(pady=5, anchor=tk.W)
+        c_radio.pack(pady=(5,2), anchor=tk.W)
 
         asm_radio = ttk.Radiobutton(self.panel_settings, text="ASM", variable=self.implementation_var, value="ASM")
-        asm_radio.pack(pady=5, anchor=tk.W)
+        asm_radio.pack(pady=(2,30), anchor=tk.W)
 
         self.implementation_var.set("C")
 
@@ -119,7 +128,7 @@ class MyApp(tk.Tk):
         amplification_label.pack(pady=5, anchor=tk.W)
 
         self.amplification_entry = ttk.Spinbox(self.panel_settings, from_=1, to=64)
-        self.amplification_entry.set(1)
+        self.amplification_entry.set(8)
         self.amplification_entry.pack(pady=5, anchor=tk.W)
 
 
@@ -138,6 +147,12 @@ class MyApp(tk.Tk):
         # Add widgets to image_before panel
         self.label_img_before = ttk.Label(self.panel_image_before)
         self.label_img_before.pack(pady=5)
+
+        self.img_before_description = ttk.Label(self.panel_image_before, text="[No file selected]")
+        self.img_before_description.pack(pady=5, anchor=tk.W, side=tk.BOTTOM)
+
+        self.img_before_header = ttk.Label(self.panel_image_before, text="Input file info: ", font=("Arial", 12))
+        self.img_before_header.pack(pady=5, anchor=tk.W, side=tk.BOTTOM)
     
     def create_image_after_panel(self):
         self.panel_image_after = ttk.Frame(self.panel_main, borderwidth=2, relief="groove", padding=10)
@@ -150,6 +165,12 @@ class MyApp(tk.Tk):
         # Add widgets to image_after panel
         self.label_img_after = ttk.Label(self.panel_image_after)
         self.label_img_after.pack(pady=5)
+
+        self.img_after_description = ttk.Label(self.panel_image_after, text="[No image processed]")
+        self.img_after_description.pack(pady=5, anchor=tk.W, side=tk.BOTTOM)
+
+        self.img_after_info_header = ttk.Label(self.panel_image_after, text="Image processing info: ", font=("Arial", 12))
+        self.img_after_info_header.pack(pady=5, anchor=tk.W, side=tk.BOTTOM)
     
     def process_image(self):
         width, height = self.img_before.size
@@ -159,12 +180,32 @@ class MyApp(tk.Tk):
         input_array = (ctypes.c_ubyte * len(img_data)).from_buffer(img_data)
         output_array = (ctypes.c_ubyte * len(img_data))()
 
-        self.asm_laplace(width, height, input_array, output_array, 1, 16)
+        num_threads = int(self.thread_entry.get())
+        amplification = int(self.amplification_entry.get())
+        func = self.c_laplace if self.implementation_var.get() == "C" else self.asm_laplace
 
+        
+        start_time = time.perf_counter()
+        func(width, height, input_array, output_array, num_threads, amplification)
+        end_time = time.perf_counter()
+
+        execution_time_us = int((end_time - start_time) * 1_000_000)
+
+        per_thread_time = execution_time_us // num_threads
+        img_desc = f"processing time: {execution_time_us} us\ntime per thread: {per_thread_time} us"
+
+        self.img_after_description.config(text=img_desc)
+
+        width, height = self.img_before.size
         output_data = np.frombuffer(output_array, dtype=np.uint8).reshape((height, width, 3))
         output_img = Image.fromarray(output_data, "RGB")
+        thumbnail = output_img.copy()
 
-        output_img.show()
+        frame_width = self.panel_image_after.winfo_width() - 20
+        frame_height = self.panel_image_after.winfo_height() - 20
+        thumbnail.thumbnail((frame_width, frame_height))
+        self.tk_img_after = ImageTk.PhotoImage(thumbnail)
+        self.label_img_after.config(image=self.tk_img_after)
 
 
 
