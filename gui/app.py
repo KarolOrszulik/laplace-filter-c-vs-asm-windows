@@ -16,7 +16,7 @@ class MyApp(tk.Tk):
 
         # configure window
         self.title("Laplace Filter - ASM vs C")
-        self.geometry("1280x720")
+        self.geometry("1200x600")
         self.minsize(720, 480)
 
         # configure grid
@@ -67,7 +67,7 @@ class MyApp(tk.Tk):
 
         # update image description
         width, height = self.img_before.size
-        img_desc = f"file name: {file_path.split('/')[-1]}\ndimensions: {width}x{height} ({width*height} pixels)"
+        img_desc = f"File name: {file_path.split('/')[-1]}\nDimensions: {width}x{height} ({width*height} pixels)"
         self.img_before_description.config(text=img_desc)
 
         # enable process button
@@ -239,7 +239,7 @@ class MyApp(tk.Tk):
         # update processing description
         execution_time_us = int((end_time - start_time) * 1_000_000)
         per_thread_time = execution_time_us // num_threads
-        proc_desc = f"processing time: {execution_time_us} μs\ntime per thread: {per_thread_time} μs"
+        proc_desc = f"Processing time: {execution_time_us} μs\nTime per thread: {per_thread_time} μs"
         self.img_after_description.config(text=proc_desc)
 
         # convert output array to image
