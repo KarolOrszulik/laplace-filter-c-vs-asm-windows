@@ -30,11 +30,26 @@ class MyApp(tk.Tk):
 
         self.rowconfigure(0, weight=1)
 
+        self.resize_event_id = None
+
+        self.bind("<Configure>", self.on_resize)
+
         try:
             self.init_dlls()
         except Exception as e:
             messagebox.showerror("DLL error", str(e))
 
+    def on_resize(self, event):
+        if event.width == self.winfo_width() and event.height == self.winfo_height():
+            return
+
+        if self.resize_event_id is not None:
+            self.after_cancel(self.resize_event_id)
+
+        self.resize_event_id = self.after(100, self.on_resize_delayed)
+    
+    def on_resize_delayed(self):
+        self.show_thumbnails()
 
     def open_input_image(self):
         file_path = filedialog.askopenfilename(title="Select the image file", filetypes=[("Image files", "*.jpg *.png *.bmp")])
