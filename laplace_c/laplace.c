@@ -5,7 +5,7 @@
 #define NUM_CHANNELS 3
 #define LAPLACE_MAX_THREADS MAXIMUM_WAIT_OBJECTS
 
-struct thread_args {
+struct thread_args_s {
     int w;
     int h;
     unsigned char* from;
@@ -19,7 +19,7 @@ DWORD WINAPI thread_func(LPVOID args);
 
 void laplace(int w, int h, unsigned char* from, unsigned char* to, int numThreads, int amplification) {
     HANDLE threads[LAPLACE_MAX_THREADS];
-    struct thread_args args[LAPLACE_MAX_THREADS];
+    struct thread_args_s args[LAPLACE_MAX_THREADS];
 
     if (numThreads > LAPLACE_MAX_THREADS)
         numThreads = LAPLACE_MAX_THREADS;
@@ -30,21 +30,12 @@ void laplace(int w, int h, unsigned char* from, unsigned char* to, int numThread
         args[i].from = from;
         args[i].to = to;
         args[i].amplification = amplification;
-        args[i].start = i + 1; // Omit 0-th row
+        args[i].start = i + 1; // omit 0-th row
         args[i].step = numThreads;
 
-        // Create a thread and pass arguments
-        threads[i] = CreateThread(
-            NULL,            // Default security attributes
-            0,               // Default stack size
-            thread_func,     // Thread function
-            &args[i],        // Argument to the thread
-            0,               // Default creation flags
-            NULL             // Do not need the thread ID
-        );
+        threads[i] = CreateThread(NULL, 0, thread_func, &args[i], 0, NULL);
 
         if (!threads[i]) {            
-			// wait for all threads to finish
 			WaitForMultipleObjects(i, threads, TRUE, INFINITE);
 
 			for (int j = 0; j < i; j++) {
@@ -54,18 +45,15 @@ void laplace(int w, int h, unsigned char* from, unsigned char* to, int numThread
         }
     }
 
-    // Wait for all threads to finish
     WaitForMultipleObjects(numThreads, threads, TRUE, INFINITE);
 
-    // Close thread handles
     for (int i = 0; i < numThreads; i++) {
         CloseHandle(threads[i]);
     }
 }
 
 DWORD WINAPI thread_func(LPVOID args) {
-
-    struct thread_args* targs = (struct thread_args*)args;
+    struct thread_args_s* targs = (struct thread_args_s*)args;
 
     int w = targs->w;
     int h = targs->h;

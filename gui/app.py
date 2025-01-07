@@ -95,8 +95,8 @@ class MyApp(tk.Tk):
 
     def init_dlls(self):
         # load DLLs
-        self.c_dll = ctypes.CDLL("../x64/Release/laplace_c.dll")
-        self.asm_dll = ctypes.CDLL("../x64/Release/laplace_asm.dll")
+        self.c_dll = ctypes.CDLL("./libraries/laplace_c.dll")
+        self.asm_dll = ctypes.CDLL("./libraries/laplace_asm.dll")
 
         # extract functions 
         self.c_laplace = self.c_dll.laplace
