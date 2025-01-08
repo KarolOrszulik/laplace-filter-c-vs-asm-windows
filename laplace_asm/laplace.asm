@@ -169,11 +169,9 @@ thread_func PROC
     ; Calculate first per-subpixel processing index
     mov rax, qword ptr [img_width]
     imul rax, NUM_CHANNELS
-    push r8
-    mov r8, LANE_WIDTH
-    imul r8, 4
-    sub rax, r8
-    pop r8
+    mov rsi, LANE_WIDTH
+    imul rsi, 4
+    sub rax, rsi
     sub rax, NUM_CHANNELS
     inc rax
     mov qword ptr [first_subpixel_proc_idx], rax

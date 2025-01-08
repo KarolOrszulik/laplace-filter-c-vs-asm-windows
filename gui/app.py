@@ -1,7 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
-from tkinter import filedialog
-from tkinter import messagebox
+from tkinter import ttk, filedialog, messagebox
 
 import numpy as np
 
@@ -59,6 +57,7 @@ class MyApp(tk.Tk):
 
         # load image
         self.img_before = Image.open(file_path)
+        self.img_before = self.img_before.convert("RGB") # ensure 3 channels
 
         # show thumbnails
         self.show_thumbnails()
@@ -70,6 +69,7 @@ class MyApp(tk.Tk):
 
         # enable process button
         self.process_button.config(state=tk.NORMAL)
+        self.raport_button.config(state=tk.NORMAL)
     
     def show_thumbnails(self):
         # determine thumbnail size
@@ -94,15 +94,11 @@ class MyApp(tk.Tk):
     def init_dlls(self):
         try:
             # load DLLs
-
-            # this_file_path = os.path.dirname(os.path.abspath(__file__))
-            # c_file_path = os.path.join(this_file_path, "libraries", "laplace_c.dll")
-            # asm_file_path = os.path.join(this_file_path, "libraries", "laplace_asm.dll")
-            # self.c_dll = ctypes.CDLL(c_file_path)
-            # self.asm_dll = ctypes.CDLL(asm_file_path)
-            
-            self.c_dll = ctypes.CDLL("../x64/Release/laplace_c.dll")
-            self.asm_dll = ctypes.CDLL("../x64/Release/laplace_asm.dll")
+            this_file_path = os.path.dirname(os.path.abspath(__file__))
+            c_file_path = os.path.join(this_file_path, "libraries", "laplace_c.dll")
+            asm_file_path = os.path.join(this_file_path, "libraries", "laplace_asm.dll")
+            self.c_dll = ctypes.CDLL(c_file_path)
+            self.asm_dll = ctypes.CDLL(asm_file_path)
 
             # extract functions 
             self.c_laplace = self.c_dll.laplace
@@ -118,7 +114,7 @@ class MyApp(tk.Tk):
         self.asm_laplace.argtypes = argtypes
         self.asm_laplace.restype = None
     
-        # dlls loaded successfully, enable file selection
+        # dlls loaded successfully, enable file selection and raport generation
         self.file_button.config(state=tk.NORMAL)
 
     def create_settings_frame(self):
@@ -128,48 +124,54 @@ class MyApp(tk.Tk):
 
         # Header
         panel_header = ttk.Label(self.panel_settings, text="Settings", font=("Arial", 12))
-        panel_header.pack(pady=(5,30), anchor=tk.W)
+        panel_header.pack(pady=(5,20), anchor=tk.W)
 
         # DLL reload
         reload_button = ttk.Button(self.panel_settings, text="Reload DLLs", command=self.init_dlls)
-        reload_button.pack(pady=5, anchor=tk.W, fill=tk.X)
+        reload_button.pack(pady=(0,5), anchor=tk.W, fill=tk.X)
 
         # File selection
         self.file_button = ttk.Button(self.panel_settings, text="Pick image file", command=self.open_input_image, state=tk.DISABLED)
-        self.file_button.pack(pady=(5,30), anchor=tk.W, fill=tk.X)
+        self.file_button.pack(pady=(0,30), anchor=tk.W, fill=tk.X)
 
         # Number of threads
         thread_label = ttk.Label(self.panel_settings, text="Number of threads:")
-        thread_label.pack(pady=5, anchor=tk.W)
+        thread_label.pack(pady=(0,5), anchor=tk.W)
 
         self.thread_entry = ttk.Spinbox(self.panel_settings, from_=1, to=64)
         self.thread_entry.set(1)
-        self.thread_entry.pack(pady=(5,30), anchor=tk.W)
+        self.thread_entry.pack(pady=(0,30), anchor=tk.W)
 
         # Implementation
         implementation_label = ttk.Label(self.panel_settings, text="Implementation:")
-        implementation_label.pack(pady=5, anchor=tk.W)
+        implementation_label.pack(pady=(0,5), anchor=tk.W)
 
         self.implementation_var = tk.StringVar()
         self.implementation_var.set("C")
 
         c_radio = ttk.Radiobutton(self.panel_settings, text="C", variable=self.implementation_var, value="C")
-        c_radio.pack(pady=(5,2), anchor=tk.W)
+        c_radio.pack(pady=(0,2), anchor=tk.W)
 
         asm_radio = ttk.Radiobutton(self.panel_settings, text="ASM", variable=self.implementation_var, value="ASM")
-        asm_radio.pack(pady=(2,30), anchor=tk.W)
+        asm_radio.pack(pady=(0,30), anchor=tk.W)
 
         # Amplification
         amplification_label = ttk.Label(self.panel_settings, text="Amplification:")
-        amplification_label.pack(pady=5, anchor=tk.W)
+        amplification_label.pack(pady=(0,5), anchor=tk.W)
 
         self.amplification_entry = ttk.Spinbox(self.panel_settings, from_=1, to=64)
         self.amplification_entry.set(8)
-        self.amplification_entry.pack(pady=5, anchor=tk.W)
+        self.amplification_entry.pack(pady=(0,30), anchor=tk.W)
+
+        # Raport button
+        self.raport_button = ttk.Button(self.panel_settings, text="Generate raport", command=self.generate_raport, state=tk.DISABLED)
+        self.raport_button.pack(pady=0, anchor=tk.W, side=tk.BOTTOM, fill=tk.X)
 
         # Process button
         self.process_button = ttk.Button(self.panel_settings, text="Process image", command=self.process_image, state=tk.DISABLED)
-        self.process_button.pack(pady=5, anchor=tk.W, side=tk.BOTTOM, fill=tk.X)
+        self.process_button.pack(pady=(0,5), anchor=tk.W, side=tk.BOTTOM, fill=tk.X)
+
+
 
     def create_image_before_frame(self):
         # Containing frame
@@ -232,7 +234,6 @@ class MyApp(tk.Tk):
     def process_image(self):
         # extract image data into an np.array
         width, height = self.img_before.size
-        self.img_before = self.img_before.convert("RGB") # ensure 4 channels
         img_data = np.array(self.img_before, dtype=np.uint8).flatten()
 
         # prepare input and output ctypes-arrays
@@ -244,13 +245,7 @@ class MyApp(tk.Tk):
         amplification = int(self.amplification_entry.get())
         func = self.c_laplace if self.implementation_var.get() == "C" else self.asm_laplace
         
-        # process image while measuring time
-        start_time = time.perf_counter()
-        func(width, height, input_array, output_array, num_threads, amplification)
-        end_time = time.perf_counter()
-
-        # update processing description
-        execution_time_us = int((end_time - start_time) * 1_000_000)
+        execution_time_us = self.run_process_function(func, width, height, input_array, output_array, num_threads, amplification)
         per_thread_time = execution_time_us // num_threads
         proc_desc = f"Processing time: {execution_time_us} μs\nTime per thread: {per_thread_time} μs"
         self.img_after_description.config(text=proc_desc)
@@ -261,6 +256,40 @@ class MyApp(tk.Tk):
         
         # show thumbnails
         self.show_thumbnails()
+    
+    def run_process_function(self, func, width, height, input_array, output_array, num_threads, amplification) -> int: 
+        start_time = time.perf_counter()
+        func(width, height, input_array, output_array, num_threads, amplification)
+        end_time = time.perf_counter()
+        return int((end_time - start_time) * 1_000_000)
+
+    def generate_raport(self):       
+        buffer = "Implementation,Threads,Avg. execution time [us]\n"
+
+        width, height = self.img_before.size
+        img_data = np.array(self.img_before, dtype=np.uint8).flatten()
+        input_array = (ctypes.c_ubyte * len(img_data)).from_buffer(img_data)
+        output_array = (ctypes.c_ubyte * len(img_data))()
+        
+        function_param = [self.c_laplace, self.asm_laplace]
+        threads_param = [1, 2, 4, 8, 16, 32, 64]
+        num_samples = 5
+
+        for func in function_param:
+            for threads in threads_param:
+                times = np.array([])
+                for _ in range(num_samples):
+                    times = np.append(times, self.run_process_function(func, width, height, input_array, output_array, threads, 1))
+                avg_time = np.mean(times)
+                buffer += f"{'C' if func is self.c_laplace else 'ASM'},{threads},{avg_time}\n"
+        
+        file_path = filedialog.askopenfilename(title="Select file to save raport", filetypes=[("Comma-separated values", ".csv .txt")])
+        if not file_path:
+            return
+
+        with open(file_path, "w") as f:
+            f.write(buffer)
+    
 
 if __name__ == "__main__":
     app = MyApp()
