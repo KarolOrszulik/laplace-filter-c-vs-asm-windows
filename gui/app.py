@@ -9,6 +9,7 @@ from PIL import Image, ImageTk
 
 import ctypes
 import time
+import os
 
 class MyApp(tk.Tk):
     def __init__(self):
@@ -95,8 +96,11 @@ class MyApp(tk.Tk):
 
     def init_dlls(self):
         # load DLLs
-        self.c_dll = ctypes.CDLL("./libraries/laplace_c.dll")
-        self.asm_dll = ctypes.CDLL("./libraries/laplace_asm.dll")
+        this_file_path = os.path.dirname(os.path.abspath(__file__))
+        c_file_path = os.path.join(this_file_path, "libraries", "laplace_c.dll")
+        asm_file_path = os.path.join(this_file_path, "libraries", "laplace_asm.dll")
+        self.c_dll = ctypes.CDLL(c_file_path)
+        self.asm_dll = ctypes.CDLL(asm_file_path)
 
         # extract functions 
         self.c_laplace = self.c_dll.laplace
