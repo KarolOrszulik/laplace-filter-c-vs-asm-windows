@@ -1,9 +1,9 @@
-; Filtr Laplace'a - implementacja wielow¹tkowa + SIMD w Asemblerze x86-64
+; Filtr Laplace'a - implementacja wielowï¿½tkowa + SIMD w Asemblerze x86-64
 ;
-; Filtr konwolucyjny s³u¿¹cy do wkrywania krawêdzi w obrazach.
+; Filtr konwolucyjny sï¿½uï¿½ï¿½cy do wkrywania krawï¿½dzi w obrazach.
 ;
 ; Autor: Karol Orszulik
-; Politechnika Œl¹ska, wydzia³ AEI, kierunek Informatyka
+; Politechnika ï¿½lï¿½ska, wydziaï¿½ AEI, kierunek Informatyka
 ; Rok akademicki 2024/2025, semestr 5.
 
 
@@ -79,7 +79,7 @@ thread_loop_start:
     push 0 ; dwCreationFlags - 0 = start thread immediately
     sub rsp, 20h ; Reserve space for arguments
     mov r9, rbx ; lpParameter - Pass thread index as argument
-    mov r8, offset thread_func ; lpStartAddress - Address of thread function
+    lea r8, thread_func ; lpStartAddress - Address of thread function
     mov rdx, 0 ; dwStackSize - Default stack size
     mov rcx, 0 ; lpThreadAttributes - Default thread attributes
 
@@ -180,8 +180,8 @@ thread_func PROC
     mov rsi, qword ptr [src_array]
     mov rdi, qword ptr [dst_array]
 
-    ; Zero out ymm7 (for zero-extension during unpacking bytes to words)
-    vpxor ymm7, ymm7, ymm7
+    ; Zero out ymm3 (for zero-extension during unpacking bytes to words)
+    vpxor ymm3, ymm3, ymm3
 
     ; Initialize y iterator (r8) to thread ID (rcx), skipping the 0-th row
     mov r8, rcx
@@ -347,10 +347,10 @@ negative_four WORD -4
 .CODE
 
 ; Load [rsi + r12] into ymm1 and unpack its bytes to words
-; (Assumes ymm7 is zeroed out for zero-extension)
+; (Assumes ymm3 is zeroed out for zero-extension)
 load_neighbour_simd MACRO
     vmovdqu ymm1, ymmword ptr [rsi + r12]
-    vpunpcklbw ymm1, ymm1, ymm7 ; Unpack low bytes to words, zero-extend using ymm7 (set to 0)
+    vpunpcklbw ymm1, ymm1, ymm3 ; Unpack low bytes to words, zero-extend using ymm3 (set to 0)
 ENDM
 
 ; Perform word-wise addition of ymm1 to ymm0

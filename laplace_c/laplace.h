@@ -1,10 +1,10 @@
 /**
-* Filtr Laplace'a - implementacja wielow¹tkowa w C
+* Filtr Laplace'a - implementacja wielowï¿½tkowa w C
 *
-* Filtr konwolucyjny s³u¿¹cy do wykrywania krawêdzi na obrazie.
+* Filtr konwolucyjny sï¿½uï¿½ï¿½cy do wykrywania krawï¿½dzi na obrazie.
 *
 * Autor: Karol Orszulik
-* Politechnika Œl¹ska, wydzia³ AEI, kierunek Informatyka
+* Politechnika ï¿½lï¿½ska, wydziaï¿½ AEI, kierunek Informatyka
 * Rok akademicki 2024/2025, semestr 5.
 */
 
@@ -14,36 +14,59 @@
 #include <windows.h>
 
 /**
-* Deklaracja funkcji laplace z dyrektyw¹ eksportu z biblioteki DLL.
-* Rozdziela pracê do wykonania i tworzy w¹tki.
-* Nastêpnie czeka na ich zakoñczenie i koñczy pracê.
+* Deklaracja funkcji laplace z dyrektywï¿½ eksportu z biblioteki DLL.
+* Rozdziela pracï¿½ do wykonania i tworzy wï¿½tki.
+* Nastï¿½pnie czeka na ich zakoï¿½czenie i koï¿½czy pracï¿½.
 * 
 * Parametry:
-*   w - szerokoœæ obrazu
-*   h - wysokoœæ obrazu
-*   from - wskaŸnik na tablicê pikseli obrazu wejœciowego
-*   to - wskaŸnik na tablicê pikseli obrazu wyjœciowego
-*   numThreads - liczba w¹tków (1-64)
-*   amplification - wspó³czynnik wzmocnienia (mno¿nik dla ka¿dego subpiksela)
+*   w - szerokoï¿½ï¿½ obrazu
+*   h - wysokoï¿½ï¿½ obrazu
+*   from - wskaï¿½nik na tablicï¿½ pikseli obrazu wejï¿½ciowego
+*   to - wskaï¿½nik na tablicï¿½ pikseli obrazu wyjï¿½ciowego
+*   numThreads - liczba wï¿½tkï¿½w (1-64)
+*   amplification - wspï¿½czynnik wzmocnienia (mnoï¿½nik dla kaï¿½dego subpiksela)
 * Zwraca: void
 */
 void __declspec(dllexport) WINAPI laplace(int w, int h, unsigned char* from, unsigned char* to, int numThreads, int amplification);
 
 
 /**
-* Funkcja w¹tku.
+* Funkcja wï¿½tku.
 * Wykonuje filtr Laplace'a na fragmencie obrazu, wierszami.
-* Filtruje wiersz, nastêpnie przeskakuje o krok równy liczbie w¹tków.
+* Filtruje wiersz, nastï¿½pnie przeskakuje o krok rï¿½wny liczbie wï¿½tkï¿½w.
 *
-* Parametry: args - wskaŸnik na strukturê z argumentami w¹tku
-* Zwraca: 0 (nieu¿ywane, efektywnie void)
+* Parametry: args - wskaï¿½nik na strukturï¿½ z argumentami wï¿½tku
+* Zwraca: 0 (nieuï¿½ywane, efektywnie void)
 */
 DWORD WINAPI thread_func(LPVOID args);
 
 
 /** 
-* Struktura przekazywana jako argument dla w¹tków.
+* Struktura przekazywana jako argument dla wï¿½tkï¿½w.
 */
 struct thread_args_s;
 
 #endif
+
+
+/*
+1.	Opis implementacji algorytmu
+Program implementuje filtr Laplaceâ€™a. Jest to filtr konwolucyjny o masce: 
+ 
+Rozdzielenie pracy miÄ™dzy wÄ…tki w celu poprawienia wydajnoÅ›ci odbywa siÄ™ nastÄ™pujÄ…co: kaÅ¼dy wÄ…tek przetwarza obraz wierszami. Po zakoÅ„czeniu przetwarzania wiersza, wÄ…tek przeskakuje liczbÄ™ wierszy rÃ³wnÄ… liczbie przetwarzajÄ…cych wÄ…tkÃ³w.
+Implementacja biblioteki w jÄ™zyku C przetwarza kaÅ¼dy subpiksel osobno. Implementacja w asemblerze procesowa x86-64 dodatkowo wykorzystuje rozkazy wektorowe do dalszego przyspieszenia obliczeÅ„. Ostatnie piksele obrazu sÄ… przetwarzane bez wykorzystania rozkazÃ³w wektorowych w celu unikniÄ™cie bÅ‚Ä™dÃ³w zwiÄ…zanych z niepoprawnym przetwarzaniem wartoÅ›ci pikseli na krawÄ™dzi obrazu.
+
+2. Opis parametrÃ³w wejÅ›ciowych programu
+
+Interfejs graficzny pozwala na otwarcie obrazu w formacie JPG, PNG oraz BMP.
+Funkcje bibioteczne w C i ASM przyjmujÄ… nastÄ™pujÄ…ce parametry:
+- szerokoÅ›Ä‡ obrazu (w pikselach)
+- wysokoÅ›Ä‡ obrazu (w pikselach)
+- wskaÅºnik na tablicÄ™ pikseli obrazu wejÅ›ciowego
+- wskaÅºnik na tablicÄ™ pikseli obrazu wyjÅ›ciowego (parametr wyjÅ›ciowy)
+- liczba wÄ…tkÃ³w (1-64)
+- wspÃ³Å‚czynnik wzmocnienia (mnoÅ¼nik dla kaÅ¼dego subpiksela), przydatny, poniewaÅ¼ filtr Laplace'a czÄ™sto daje wynik o niskiej wartoÅ›ci, co moÅ¼e byÄ‡ niezauwaÅ¼alne na obrazie.
+
+3. Opis wybranego fragmentu asemblerowego kodu ÅºrÃ³dÅ‚owego biblioteki DLL z komentarzami
+
+*/

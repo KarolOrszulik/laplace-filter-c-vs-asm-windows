@@ -36,7 +36,6 @@ class MyApp(tk.Tk):
         # load DLLs
         self.init_dlls()
 
-
     def on_resize(self, event):
         if event.width == self.winfo_width() and event.height == self.winfo_height():
             return
@@ -171,8 +170,6 @@ class MyApp(tk.Tk):
         self.process_button = ttk.Button(self.panel_settings, text="Process image", command=self.process_image, state=tk.DISABLED)
         self.process_button.pack(pady=(0,5), anchor=tk.W, side=tk.BOTTOM, fill=tk.X)
 
-
-
     def create_image_before_frame(self):
         # Containing frame
         self.panel_image_before = ttk.Frame(self, borderwidth=2, relief="groove", padding=5)
@@ -277,11 +274,12 @@ class MyApp(tk.Tk):
 
         for func in function_param:
             for threads in threads_param:
-                times = np.array([])
-                for _ in range(num_samples):
-                    times = np.append(times, self.run_process_function(func, width, height, input_array, output_array, threads, 1))
+                times = np.zeros(num_samples)
+                for i in range(num_samples):
+                    times[i] = self.run_process_function(func, width, height, input_array, output_array, threads, 1)
                 avg_time = np.mean(times)
                 buffer += f"{'C' if func is self.c_laplace else 'ASM'},{threads},{avg_time}\n"
+
         
         file_path = filedialog.askopenfilename(title="Select file to save raport", filetypes=[("Comma-separated values", ".csv .txt")])
         if not file_path:
@@ -290,7 +288,6 @@ class MyApp(tk.Tk):
         with open(file_path, "w") as f:
             f.write(buffer)
     
-
 if __name__ == "__main__":
     app = MyApp()
     app.mainloop()
