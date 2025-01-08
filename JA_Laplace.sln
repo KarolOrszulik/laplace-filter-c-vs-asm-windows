@@ -19,6 +19,8 @@ Global
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
+		ReleaseMinSize|x64 = ReleaseMinSize|x64
+		ReleaseMinSize|x86 = ReleaseMinSize|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{70FAACD5-266F-41CA-9A1C-A76CD1FF73A4}.Debug|x64.ActiveCfg = Debug|x64
@@ -29,6 +31,10 @@ Global
 		{70FAACD5-266F-41CA-9A1C-A76CD1FF73A4}.Release|x64.Build.0 = Release|x64
 		{70FAACD5-266F-41CA-9A1C-A76CD1FF73A4}.Release|x86.ActiveCfg = Release|Win32
 		{70FAACD5-266F-41CA-9A1C-A76CD1FF73A4}.Release|x86.Build.0 = Release|Win32
+		{70FAACD5-266F-41CA-9A1C-A76CD1FF73A4}.ReleaseMinSize|x64.ActiveCfg = ReleaseMinSize|x64
+		{70FAACD5-266F-41CA-9A1C-A76CD1FF73A4}.ReleaseMinSize|x64.Build.0 = ReleaseMinSize|x64
+		{70FAACD5-266F-41CA-9A1C-A76CD1FF73A4}.ReleaseMinSize|x86.ActiveCfg = ReleaseMinSize|Win32
+		{70FAACD5-266F-41CA-9A1C-A76CD1FF73A4}.ReleaseMinSize|x86.Build.0 = ReleaseMinSize|Win32
 		{228D49D4-4677-4ED3-918D-00B443CCCB65}.Debug|x64.ActiveCfg = Debug|x64
 		{228D49D4-4677-4ED3-918D-00B443CCCB65}.Debug|x64.Build.0 = Debug|x64
 		{228D49D4-4677-4ED3-918D-00B443CCCB65}.Debug|x86.ActiveCfg = Debug|Win32
@@ -37,6 +43,10 @@ Global
 		{228D49D4-4677-4ED3-918D-00B443CCCB65}.Release|x64.Build.0 = Release|x64
 		{228D49D4-4677-4ED3-918D-00B443CCCB65}.Release|x86.ActiveCfg = Release|Win32
 		{228D49D4-4677-4ED3-918D-00B443CCCB65}.Release|x86.Build.0 = Release|Win32
+		{228D49D4-4677-4ED3-918D-00B443CCCB65}.ReleaseMinSize|x64.ActiveCfg = ReleaseMinSize|x64
+		{228D49D4-4677-4ED3-918D-00B443CCCB65}.ReleaseMinSize|x64.Build.0 = ReleaseMinSize|x64
+		{228D49D4-4677-4ED3-918D-00B443CCCB65}.ReleaseMinSize|x86.ActiveCfg = ReleaseMinSize|Win32
+		{228D49D4-4677-4ED3-918D-00B443CCCB65}.ReleaseMinSize|x86.Build.0 = ReleaseMinSize|Win32
 		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.Debug|x64.ActiveCfg = Debug|x64
 		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.Debug|x64.Build.0 = Debug|x64
 		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.Debug|x86.ActiveCfg = Debug|Win32
@@ -45,6 +55,10 @@ Global
 		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.Release|x64.Build.0 = Release|x64
 		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.Release|x86.ActiveCfg = Release|Win32
 		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.Release|x86.Build.0 = Release|Win32
+		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.ReleaseMinSize|x64.ActiveCfg = ReleaseMinSize|x64
+		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.ReleaseMinSize|x64.Build.0 = ReleaseMinSize|x64
+		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.ReleaseMinSize|x86.ActiveCfg = ReleaseMinSize|Win32
+		{AB373BB4-A6CE-4CCA-80AA-DE8662A0F1EA}.ReleaseMinSize|x86.Build.0 = ReleaseMinSize|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

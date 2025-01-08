@@ -36,10 +36,7 @@ class MyApp(tk.Tk):
         self.bind("<Configure>", self.on_resize)
 
         # load DLLs
-        try:
-            self.init_dlls()
-        except Exception as e:
-            messagebox.showerror("DLL error", str(e))
+        self.init_dlls()
 
 
     def on_resize(self, event):
@@ -95,16 +92,24 @@ class MyApp(tk.Tk):
             self.label_img_after.config(image=self.tk_img_after)
 
     def init_dlls(self):
-        # load DLLs
-        this_file_path = os.path.dirname(os.path.abspath(__file__))
-        c_file_path = os.path.join(this_file_path, "libraries", "laplace_c.dll")
-        asm_file_path = os.path.join(this_file_path, "libraries", "laplace_asm.dll")
-        self.c_dll = ctypes.CDLL(c_file_path)
-        self.asm_dll = ctypes.CDLL(asm_file_path)
+        try:
+            # load DLLs
 
-        # extract functions 
-        self.c_laplace = self.c_dll.laplace
-        self.asm_laplace = self.asm_dll.laplace
+            # this_file_path = os.path.dirname(os.path.abspath(__file__))
+            # c_file_path = os.path.join(this_file_path, "libraries", "laplace_c.dll")
+            # asm_file_path = os.path.join(this_file_path, "libraries", "laplace_asm.dll")
+            # self.c_dll = ctypes.CDLL(c_file_path)
+            # self.asm_dll = ctypes.CDLL(asm_file_path)
+            
+            self.c_dll = ctypes.CDLL("../x64/Release/laplace_c.dll")
+            self.asm_dll = ctypes.CDLL("../x64/Release/laplace_asm.dll")
+
+            # extract functions 
+            self.c_laplace = self.c_dll.laplace
+            self.asm_laplace = self.asm_dll.laplace
+        except Exception as e:
+            messagebox.showerror("DLL error", str(e))
+            return
 
         # set argtypes and restype
         argtypes = [ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_ubyte), ctypes.POINTER(ctypes.c_ubyte), ctypes.c_int, ctypes.c_int]
@@ -124,6 +129,10 @@ class MyApp(tk.Tk):
         # Header
         panel_header = ttk.Label(self.panel_settings, text="Settings", font=("Arial", 12))
         panel_header.pack(pady=(5,30), anchor=tk.W)
+
+        # DLL reload
+        reload_button = ttk.Button(self.panel_settings, text="Reload DLLs", command=self.init_dlls)
+        reload_button.pack(pady=5, anchor=tk.W, fill=tk.X)
 
         # File selection
         self.file_button = ttk.Button(self.panel_settings, text="Pick image file", command=self.open_input_image, state=tk.DISABLED)

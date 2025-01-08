@@ -1,10 +1,13 @@
 #include "laplace.h"
 #include <windows.h>
-#include <stdlib.h>
 
+/** Liczba kana³ów obrazu - RGB = 3 */
 #define NUM_CHANNELS 3
+
+/** Maksymalna liczba w¹tków, wg limitu synchronizacji Windows API */
 #define LAPLACE_MAX_THREADS MAXIMUM_WAIT_OBJECTS
 
+/** Struktura przekazywana jako parametr do w¹tków wykonuj¹cych filtr */
 struct thread_args_s {
     int w;
     int h;
@@ -15,8 +18,7 @@ struct thread_args_s {
     int step;
 };
 
-DWORD WINAPI thread_func(LPVOID args);
-
+/** Implementacja funkcji filtru Laplace'a w wersji wielow¹tkowej. */
 void laplace(int w, int h, unsigned char* from, unsigned char* to, int numThreads, int amplification) {
     HANDLE threads[LAPLACE_MAX_THREADS];
     struct thread_args_s args[LAPLACE_MAX_THREADS];
@@ -30,7 +32,7 @@ void laplace(int w, int h, unsigned char* from, unsigned char* to, int numThread
         args[i].from = from;
         args[i].to = to;
         args[i].amplification = amplification;
-        args[i].start = i + 1; // omit 0-th row
+        args[i].start = i + 1;
         args[i].step = numThreads;
 
         threads[i] = CreateThread(NULL, 0, thread_func, &args[i], 0, NULL);
@@ -52,6 +54,7 @@ void laplace(int w, int h, unsigned char* from, unsigned char* to, int numThread
     }
 }
 
+/** Implementacja funkcji w¹tku */
 DWORD WINAPI thread_func(LPVOID args) {
     struct thread_args_s* targs = (struct thread_args_s*)args;
 
